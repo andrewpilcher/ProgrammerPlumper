@@ -1,0 +1,376 @@
+<!--
+  Language Lineage
+  Copyright (c) 2026 Andrew Pilcher (https://github.com/andrewpilcher)
+  Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+  https://creativecommons.org/licenses/by/4.0/
+  You may share and adapt this work, including commercially, if you give credit,
+  link the license, and indicate changes. The language relationship data comes
+  from course materials and is not covered by this license.
+-->
+<title>Language Lineage</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: control strip over a year-ruled family tree, with a sticky detail panel beside it on wide screens and below it on phones. */
+:root {
+  --bg: #f5f7fa; --surface: #ffffff; --ink: #15202b; --muted: #566373;
+  --line: #d3dae3; --grid: #e6ebf1; --node: #ffffff; --node-line: #9eaaba; --edge: #8b97a7;
+  --anc: #1d5fd1;  --anc-bg: #d9e6fb;
+  --desc: #b9520a; --desc-bg: #fce3cf;
+  --sib: #18805a;  --sib-bg: #d3f0e2;
+  --cous: #7440bd; --cous-bg: #e8daf8;
+  --kin: #637183;  --kin-bg: #e8ecf1;
+  --self-bg: #15202b; --self-fg: #ffffff; --focus: #1d5fd1;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e141c; --surface: #151d28; --ink: #e7edf4; --muted: #9ba8b7;
+    --line: #2c3745; --grid: #1b2531; --node: #182130; --node-line: #435164; --edge: #6d7b8d;
+    --anc: #7aa9ff; --anc-bg: #1b3158;
+    --desc: #f4a56b; --desc-bg: #4b2b13;
+    --sib: #5ed3a0; --sib-bg: #13412d;
+    --cous: #c49af4; --cous-bg: #38225c;
+    --kin: #93a1b3; --kin-bg: #232d3a;
+    --self-bg: #e7edf4; --self-fg: #0e141c; --focus: #7aa9ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e141c; --surface: #151d28; --ink: #e7edf4; --muted: #9ba8b7;
+  --line: #2c3745; --grid: #1b2531; --node: #182130; --node-line: #435164; --edge: #6d7b8d;
+  --anc: #7aa9ff; --anc-bg: #1b3158;
+  --desc: #f4a56b; --desc-bg: #4b2b13;
+  --sib: #5ed3a0; --sib-bg: #13412d;
+  --cous: #c49af4; --cous-bg: #38225c;
+  --kin: #93a1b3; --kin-bg: #232d3a;
+  --self-bg: #e7edf4; --self-fg: #0e141c; --focus: #7aa9ff;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.wrap {
+  max-width: 1320px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 36px;
+}
+h1 { margin: 0; font-size: clamp(1.55rem, 3.2vw, 2.1rem); font-weight: 600; letter-spacing: -0.015em; line-height: 1.15; text-wrap: balance; }
+.sub { margin: 6px 0 0; color: var(--muted); max-width: 62ch; }
+.sub .n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 18px 0 14px; }
+.pick { display: flex; align-items: center; gap: 8px; }
+.pick label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+select, .btn {
+  font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 6px; min-height: 38px; padding: 6px 10px;
+}
+select { min-width: 190px; max-width: 100%; }
+.btn { cursor: pointer; }
+.btn:hover, select:hover { border-color: var(--node-line); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.lg {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 5px 11px;
+  font: inherit; font-size: 13.5px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
+}
+.lg:hover { border-color: var(--node-line); }
+.lg .sw { width: 18px; height: 11px; border-radius: 50%; border: 2px solid var(--c); background: var(--cb); flex: none; }
+.lg .ct { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.lg[aria-pressed="false"] { color: var(--muted); }
+.lg[aria-pressed="false"] .sw { background: transparent; border-style: dashed; opacity: 0.6; }
+.lg[aria-pressed="false"] .nm { text-decoration: line-through; text-decoration-thickness: 1px; }
+[data-k="anc"] { --c: var(--anc); --cb: var(--anc-bg); }
+[data-k="desc"] { --c: var(--desc); --cb: var(--desc-bg); }
+[data-k="sib"] { --c: var(--sib); --cb: var(--sib-bg); }
+[data-k="cous"] { --c: var(--cous); --cb: var(--cous-bg); }
+[data-k="kin"] { --c: var(--kin); --cb: var(--kin-bg); }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (min-width: 960px) { .layout { grid-template-columns: minmax(0, 1fr) 320px; } }
+.graph {
+  min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  overflow: auto; height: min(80vh, 920px); min-height: 440px; overscroll-behavior: contain;
+}
+svg { display: block; width: 100%; min-width: 820px; height: auto; font-family: var(--font-body); }
+.yl { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.yline { stroke: var(--grid); stroke-width: 1; stroke-dasharray: 2 5; }
+
+.e { fill: none; stroke: var(--edge); stroke-width: 1; opacity: 0.55; transition: opacity .18s, stroke .18s; }
+.has-sel .e { opacity: 0.1; }
+.has-sel .e.anc, .has-sel .e.desc, .has-sel .e.sib, .has-sel .e.cous { opacity: 1; stroke-width: 2.3; }
+.e.anc { stroke: var(--anc); } .e.desc { stroke: var(--desc); } .e.sib { stroke: var(--sib); } .e.cous { stroke: var(--cous); stroke-dasharray: 5 3; }
+.m-dim { fill: var(--edge); } .m-anc { fill: var(--anc); } .m-desc { fill: var(--desc); } .m-sib { fill: var(--sib); } .m-cous { fill: var(--cous); }
+
+.node { cursor: pointer; transition: opacity .18s; }
+.node ellipse { fill: var(--node); stroke: var(--node-line); stroke-width: 1; transition: fill .18s, stroke .18s; }
+.node text { font-size: 12px; fill: var(--ink); pointer-events: none; }
+.node:hover ellipse { stroke: var(--ink); }
+.node:focus { outline: none; }
+.node:focus-visible ellipse { stroke: var(--focus); stroke-width: 3; }
+.n-self ellipse { fill: var(--self-bg); stroke: var(--self-bg); stroke-width: 2; }
+.n-self text { fill: var(--self-fg); font-weight: 600; }
+.n-anc ellipse { fill: var(--anc-bg); stroke: var(--anc); stroke-width: 2; }
+.n-desc ellipse { fill: var(--desc-bg); stroke: var(--desc); stroke-width: 2; }
+.n-sib ellipse { fill: var(--sib-bg); stroke: var(--sib); stroke-width: 2; }
+.n-cous ellipse { fill: var(--cous-bg); stroke: var(--cous); stroke-width: 2; }
+.n-kin ellipse { fill: var(--kin-bg); stroke: var(--kin); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.n-none { opacity: 0.32; }
+.n-none:hover { opacity: 0.8; }
+
+.panel {
+  min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 16px 14px; font-size: 14px;
+}
+@media (min-width: 960px) { .panel { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; } }
+.panel h2 { margin: 0; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.panel h2 .yr { font-family: var(--font-mono); font-size: 13px; font-weight: 400; color: var(--muted); }
+.panel .lead { margin: 8px 0 0; color: var(--muted); }
+.kv { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 6px 10px; margin: 12px 0 4px; align-items: baseline; }
+.kv dt { color: var(--muted); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+.kv dd { margin: 0; }
+.grp { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.grp h3 { margin: 0; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.grp h3 .sw { width: 18px; height: 11px; border-radius: 50%; border: 2px solid var(--c); background: var(--cb); flex: none; }
+.grp h3 .ct { font-family: var(--font-mono); font-size: 12px; font-weight: 400; color: var(--muted); }
+.grp .note { margin: 2px 0 6px; font-size: 12.5px; color: var(--muted); }
+.grp.off { opacity: 0.5; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.chip {
+  font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; padding: 2px 8px; min-height: 26px;
+  background: var(--cb, var(--surface)); border: 1px solid var(--c, var(--line)); border-radius: 6px;
+}
+.chip:hover { border-color: var(--ink); }
+.none { color: var(--muted); font-size: 13px; }
+.foot { margin: 14px 0 0; font-size: 12.5px; color: var(--muted); max-width: 80ch; }
+@media (prefers-reduced-motion: reduce) { .e, .node, .node ellipse { transition: none; } }
+</style>
+
+<main class="wrap">
+  <header>
+    <h1>Language Lineage</h1>
+    <p class="sub"><span class="n" id="stat"></span> Select a language to light up its ancestors, descendants, siblings and cousins.</p>
+  </header>
+
+  <div class="controls">
+    <div class="pick">
+      <label for="pick">Language</label>
+      <select id="pick"></select>
+      <button class="btn" id="clear" type="button">Clear</button>
+    </div>
+    <ul class="legend" id="legend" aria-label="Relationship filters"></ul>
+  </div>
+
+  <div class="layout">
+    <div class="graph" id="graph"><svg id="svg" role="group" aria-label="Family tree of programming languages by year"></svg></div>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </div>
+
+  <p class="foot">Rows are two-year bins by first-release year; an odd year sits on the earlier row. Built from the child/2 and birth/2 Prolog facts, supplied by course materials.</p>
+  <p class="foot">© 2026 <a href="https://github.com/andrewpilcher" target="_blank" rel="noopener">Andrew Pilcher</a>. Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</p>
+</main>
+
+<script>
+const DATA = {"w":1246.3,"h":2016.0,"nodes":[{"id":"fortran_1","label":"Fortran I","year":1956,"x":833.0,"y":18.0,"w":83.7,"h":36.0},{"id":"lisp","label":"Lisp","year":1958,"x":264.0,"y":84.0,"w":54.0,"h":36.0},{"id":"algol_60","label":"Algol 60","year":1960,"x":833.0,"y":150.0,"w":80.0,"h":36.0},{"id":"cobol","label":"COBOL","year":1960,"x":1210.0,"y":150.0,"w":72.6,"h":36.0},{"id":"pli","label":"PL/I","year":1964,"x":1132.0,"y":282.0,"w":54.0,"h":36.0},{"id":"smalltalk","label":"Smalltalk","year":1968,"x":833.0,"y":414.0,"w":87.4,"h":36.0},{"id":"pascal","label":"Pascal","year":1970,"x":1034.0,"y":480.0,"w":66.5,"h":36.0},{"id":"prolog","label":"Prolog","year":1970,"x":1169.0,"y":480.0,"w":65.3,"h":36.0},{"id":"scheme","label":"Scheme","year":1974,"x":334.0,"y":612.0,"w":80.0,"h":36.0},{"id":"ml","label":"ML","year":1976,"x":665.0,"y":678.0,"w":54.0,"h":36.0},{"id":"fortran_77","label":"Fortran 77","year":1977,"x":162.0,"y":678.0,"w":98.5,"h":36.0},{"id":"ckr","label":"C (K&R)","year":1975,"x":715.0,"y":612.0,"w":76.3,"h":36.0},{"id":"smalltalk_80","label":"Smalltalk 80","year":1980,"x":876.0,"y":810.0,"w":110.8,"h":36.0},{"id":"ada_83","label":"Ada 83","year":1983,"x":1034.0,"y":876.0,"w":72.6,"h":36.0},{"id":"common_lisp","label":"Common Lisp","year":1984,"x":250.0,"y":942.0,"w":120.7,"h":36.0},{"id":"cpp","label":"C++","year":1984,"x":528.0,"y":942.0,"w":54.2,"h":36.0},{"id":"sml","label":"SML","year":1984,"x":632.0,"y":942.0,"w":54.0,"h":36.0},{"id":"caml","label":"Caml","year":1986,"x":586.0,"y":1008.0,"w":57.9,"h":36.0},{"id":"perl","label":"Perl","year":1986,"x":1104.0,"y":1008.0,"w":54.0,"h":36.0},{"id":"eiffel","label":"Eiffel","year":1986,"x":1026.0,"y":1008.0,"w":56.6,"h":36.0},{"id":"tcl","label":"Tcl","year":1988,"x":964.0,"y":1074.0,"w":54.0,"h":36.0},{"id":"python","label":"Python","year":1990,"x":765.0,"y":1140.0,"w":71.4,"h":36.0},{"id":"fortran_90","label":"Fortran 90","year":1990,"x":156.0,"y":1140.0,"w":98.5,"h":36.0},{"id":"ruby","label":"Ruby","year":1994,"x":919.0,"y":1272.0,"w":56.6,"h":36.0},{"id":"perl_5","label":"Perl 5","year":1994,"x":1117.0,"y":1272.0,"w":61.6,"h":36.0},{"id":"javascript","label":"JavaScript","year":1994,"x":343.0,"y":1272.0,"w":94.8,"h":36.0},{"id":"java","label":"Java","year":1994,"x":173.0,"y":1272.0,"w":54.0,"h":36.0},{"id":"ocaml","label":"OCaml","year":1996,"x":592.0,"y":1338.0,"w":70.2,"h":36.0},{"id":"cpp_iso","label":"C++ (ISO)","year":1998,"x":226.0,"y":1404.0,"w":96.0,"h":36.0},{"id":"scheme_r5rs","label":"Scheme R5RS","year":1998,"x":450.0,"y":1404.0,"w":124.4,"h":36.0},{"id":"haskell_98","label":"Haskell 98","year":1998,"x":683.0,"y":1404.0,"w":96.0,"h":36.0},{"id":"c_sharp","label":"C#","year":2000,"x":226.0,"y":1470.0,"w":54.0,"h":36.0},{"id":"python_2","label":"Python 2.0","year":2000,"x":767.0,"y":1470.0,"w":98.5,"h":36.0},{"id":"java_5","label":"Java 5","year":2004,"x":113.0,"y":1602.0,"w":65.3,"h":36.0},{"id":"c_sharp_2","label":"C# 2.0","year":2004,"x":307.0,"y":1602.0,"w":70.2,"h":36.0},{"id":"go","label":"Go","year":2008,"x":838.0,"y":1734.0,"w":54.0,"h":36.0},{"id":"kotlin","label":"Kotlin","year":2010,"x":226.0,"y":1800.0,"w":61.6,"h":36.0},{"id":"rust","label":"Rust","year":2010,"x":557.0,"y":1800.0,"w":54.0,"h":36.0},{"id":"haskell_2010","label":"Haskell 2010","year":2010,"x":674.0,"y":1800.0,"w":114.5,"h":36.0},{"id":"c_sharp_5","label":"C# 5.0","year":2012,"x":341.0,"y":1866.0,"w":70.2,"h":36.0},{"id":"swift","label":"Swift","year":2013,"x":674.0,"y":1866.0,"w":55.4,"h":36.0},{"id":"java_8","label":"Java 8","year":2014,"x":113.0,"y":1932.0,"w":65.3,"h":36.0},{"id":"javascript_es2017","label":"JavaScript ES2017","year":2017,"x":381.0,"y":1998.0,"w":153.9,"h":36.0}],"rows":[{"year":1956,"y":18.0},{"year":1958,"y":84.0},{"year":1960,"y":150.0},{"year":1962,"y":216.0},{"year":1964,"y":282.0},{"year":1966,"y":348.0},{"year":1968,"y":414.0},{"year":1970,"y":480.0},{"year":1972,"y":546.0},{"year":1974,"y":612.0},{"year":1976,"y":678.0},{"year":1978,"y":744.0},{"year":1980,"y":810.0},{"year":1982,"y":876.0},{"year":1984,"y":942.0},{"year":1986,"y":1008.0},{"year":1988,"y":1074.0},{"year":1990,"y":1140.0},{"year":1992,"y":1206.0},{"year":1994,"y":1272.0},{"year":1996,"y":1338.0},{"year":1998,"y":1404.0},{"year":2000,"y":1470.0},{"year":2002,"y":1536.0},{"year":2004,"y":1602.0},{"year":2006,"y":1668.0},{"year":2008,"y":1734.0},{"year":2010,"y":1800.0},{"year":2012,"y":1866.0},{"year":2014,"y":1932.0},{"year":2016,"y":1998.0}],"edges":[{"p":"fortran_1","c":"algol_60","d":"M833.0,36.3C833.0,59.2 833.0,99.8 833.0,125.5L833.0,131.7"},{"p":"fortran_1","c":"pli","d":"M861.8,31.1C915.8,55.1 1032.9,114.1 1100.0,198.0C1114.0,215.5 1122.4,239.9 1127.1,257.6L1128.6,263.9"},{"p":"fortran_1","c":"fortran_77","d":"M791.4,19.9C662.0,23.1 273.1,35.1 226.0,66.0C191.1,88.9 182.0,107.2 182.0,149.0C182.0,149.0 182.0,149.0 182.0,547.0C182.0,584.8 173.6,628.2 167.7,654.0L166.3,659.9"},{"p":"lisp","c":"scheme","d":"M274.0,101.1C287.8,125.1 311.0,171.8 311.0,215.0C311.0,215.0 311.0,215.0 311.0,481.0C311.0,519.0 320.6,562.3 327.4,588.1L329.0,593.9"},{"p":"lisp","c":"common_lisp","d":"M261.0,102.2C256.8,127.0 250.0,174.4 250.0,215.0C250.0,215.0 250.0,215.0 250.0,811.0C250.0,848.2 250.0,891.5 250.0,917.5L250.0,923.8"},{"p":"algol_60","c":"pli","d":"M873.3,151.1C922.1,152.9 1005.1,161.6 1065.0,198.0C1089.6,212.9 1109.0,240.3 1120.5,259.5L1123.5,264.7"},{"p":"algol_60","c":"smalltalk","d":"M833.0,168.2C833.0,213.7 833.0,337.5 833.0,389.5L833.0,395.7"},{"p":"algol_60","c":"scheme","d":"M798.7,159.3C711.4,182.8 488.0,258.1 488.0,413.0C488.0,413.0 488.0,413.0 488.0,481.0C488.0,542.1 416.4,580.3 370.9,598.4L365.2,600.7"},{"p":"algol_60","c":"ckr","d":"M811.7,165.5C782.9,187.0 735.0,230.4 735.0,281.0C735.0,281.0 735.0,281.0 735.0,481.0C735.0,518.8 726.6,562.2 720.7,588.0L719.3,593.9"},{"p":"algol_60","c":"cpp","d":"M793.0,150.8C711.5,152.6 534.0,169.3 534.0,281.0C534.0,281.0 534.0,281.0 534.0,811.0C534.0,848.3 531.5,891.5 529.7,917.5L529.3,923.8"},{"p":"algol_60","c":"perl","d":"M872.4,153.9C905.6,158.3 952.3,169.6 982.0,198.0C1140.6,349.9 1103.0,457.4 1103.0,677.0C1103.0,677.0 1103.0,677.0 1103.0,745.0C1103.0,833.2 1103.6,938.1 1103.9,983.8L1103.9,989.8"},{"p":"algol_60","c":"tcl","d":"M860.7,163.1C899.4,182.1 965.0,222.9 965.0,281.0C965.0,281.0 965.0,281.0 965.0,745.0C965.0,859.4 964.4,996.2 964.1,1049.8L964.1,1055.9"},{"p":"cobol","c":"pli","d":"M1200.1,167.5C1186.0,190.9 1160.2,234.0 1144.7,259.8L1141.6,265.1"},{"p":"pli","c":"pascal","d":"M1123.8,299.4C1106.2,334.5 1064.9,417.3 1045.0,457.0L1042.2,462.5"},{"p":"smalltalk","c":"smalltalk_80","d":"M833.0,432.2C833.0,457.1 833.0,504.6 833.0,545.0C833.0,545.0 833.0,545.0 833.0,679.0C833.0,718.3 851.0,761.1 863.7,786.5L866.5,791.9"},{"p":"pascal","c":"ada_83","d":"M1034.0,498.2C1034.0,523.1 1034.0,570.6 1034.0,611.0C1034.0,611.0 1034.0,611.0 1034.0,745.0C1034.0,782.2 1034.0,825.5 1034.0,851.5L1034.0,857.8"},{"p":"pascal","c":"python","d":"M1004.7,489.0C939.3,508.9 787.0,567.0 787.0,677.0C787.0,677.0 787.0,677.0 787.0,1009.0C787.0,1046.9 777.8,1090.2 771.3,1116.0L769.8,1121.9"},{"p":"scheme","c":"common_lisp","d":"M326.0,629.8C315.1,654.2 297.0,701.0 297.0,743.0C297.0,743.0 297.0,743.0 297.0,811.0C297.0,850.7 277.4,893.4 263.5,918.6L260.4,924.0"},{"p":"scheme","c":"scheme_r5rs","d":"M336.2,630.2C339.1,655.1 344.0,702.5 344.0,743.0C344.0,743.0 344.0,743.0 344.0,943.0C344.0,1039.4 437.0,1042.6 437.0,1139.0C437.0,1139.0 437.0,1139.0 437.0,1273.0C437.0,1310.4 442.4,1353.6 446.2,1379.6L447.2,1385.8"},{"p":"ml","c":"sml","d":"M662.8,696.2C657.1,741.7 641.5,865.5 635.0,917.5L634.2,923.7"},{"p":"ml","c":"haskell_98","d":"M671.4,695.5C680.2,720.0 695.0,767.3 695.0,809.0C695.0,809.0 695.0,809.0 695.0,1273.0C695.0,1310.4 690.0,1353.6 686.5,1379.6L685.6,1385.8"},{"p":"fortran_77","c":"fortran_90","d":"M160.7,696.2C158.9,721.1 156.0,768.6 156.0,809.0C156.0,809.0 156.0,809.0 156.0,1009.0C156.0,1046.2 156.0,1089.5 156.0,1115.5L156.0,1121.8"},{"p":"ckr","c":"cpp","d":"M684.9,623.3C666.3,631.0 642.9,643.1 627.0,660.0C599.2,689.6 589.0,702.4 589.0,743.0C589.0,743.0 589.0,743.0 589.0,811.0C589.0,853.1 562.4,896.3 544.4,920.8L540.6,925.7"},{"p":"ckr","c":"python","d":"M720.6,630.0C728.3,654.7 741.0,701.8 741.0,743.0C741.0,743.0 741.0,743.0 741.0,1009.0C741.0,1047.0 751.1,1090.3 758.1,1116.1L759.8,1121.9"},{"p":"smalltalk_80","c":"ruby","d":"M881.9,828.0C889.8,852.6 903.0,899.7 903.0,941.0C903.0,941.0 903.0,941.0 903.0,1141.0C903.0,1178.5 909.6,1221.7 914.4,1247.6L915.5,1253.8"},{"p":"smalltalk_80","c":"go","d":"M871.9,828.1C866.3,852.9 857.0,900.2 857.0,941.0C857.0,941.0 857.0,941.0 857.0,1603.0C857.0,1640.8 849.0,1684.1 843.4,1710.0L842.1,1715.9"},{"p":"ada_83","c":"eiffel","d":"M1033.0,894.0C1031.5,917.0 1029.0,958.0 1027.4,983.8L1027.0,990.0"},{"p":"cpp","c":"python","d":"M551.5,951.4C572.3,959.5 602.7,972.9 626.0,990.0C639.8,1000.1 712.0,1079.9 746.6,1118.4L751.0,1123.3"},{"p":"cpp","c":"java","d":"M503.4,950.1C480.2,957.6 445.1,971.0 419.0,990.0C312.6,1067.5 220.2,1198.9 186.5,1249.9L183.1,1255.1"},{"p":"cpp","c":"cpp_iso","d":"M513.9,957.7C473.7,1000.5 356.4,1129.4 285.0,1254.0C261.0,1295.9 242.4,1349.5 232.9,1379.7L231.1,1385.7"},{"p":"cpp","c":"rust","d":"M526.9,960.2C525.4,985.1 523.0,1032.6 523.0,1073.0C523.0,1073.0 523.0,1073.0 523.0,1273.0C523.0,1360.7 546.0,1381.3 546.0,1469.0C546.0,1469.0 546.0,1469.0 546.0,1669.0C546.0,1706.4 550.6,1749.6 553.8,1775.6L554.6,1781.8"},{"p":"sml","c":"caml","d":"M620.9,958.5C614.9,966.8 607.5,977.1 601.0,986.1L597.4,991.2"},{"p":"caml","c":"ocaml","d":"M586.6,1026.2C587.5,1051.1 589.0,1098.6 589.0,1139.0C589.0,1139.0 589.0,1139.0 589.0,1207.0C589.0,1244.2 590.2,1287.5 591.1,1313.5L591.4,1319.8"},{"p":"perl","c":"ruby","d":"M1095.5,1025.3C1075.7,1062.4 1024.0,1155.4 968.0,1224.0C959.6,1234.3 949.1,1244.6 940.0,1252.9L935.4,1257.1"},{"p":"perl","c":"perl_5","d":"M1104.9,1026.2C1107.1,1071.7 1113.3,1195.5 1115.8,1247.5L1116.1,1253.8"},{"p":"eiffel","c":"ruby","d":"M1021.9,1026.1C1017.6,1043.0 1010.4,1069.7 1002.0,1092.0C980.2,1150.2 947.6,1215.9 930.5,1249.1L927.6,1254.6"},{"p":"python","c":"ruby","d":"M782.7,1155.9C811.2,1180.0 867.2,1227.2 897.8,1253.1L902.5,1257.0"},{"p":"python","c":"python_2","d":"M765.0,1158.2C765.0,1183.1 765.0,1230.6 765.0,1271.0C765.0,1271.0 765.0,1271.0 765.0,1339.0C765.0,1376.2 765.8,1419.5 766.4,1445.5L766.6,1451.8"},{"p":"ruby","c":"swift","d":"M917.0,1290.2C914.4,1315.1 910.0,1362.5 910.0,1403.0C910.0,1403.0 910.0,1403.0 910.0,1735.0C910.0,1826.3 772.8,1854.0 707.6,1861.9L701.5,1862.7"},{"p":"javascript","c":"kotlin","d":"M337.9,1290.1C324.0,1336.7 285.1,1470.7 261.0,1584.0C246.2,1653.3 234.3,1736.4 229.0,1775.9L228.2,1781.9"},{"p":"javascript","c":"javascript_es2017","d":"M347.3,1290.0C362.1,1350.1 410.0,1558.3 410.0,1733.0C410.0,1733.0 410.0,1733.0 410.0,1867.0C410.0,1905.3 397.9,1948.5 389.3,1974.2L387.3,1980.0"},{"p":"java","c":"javascript","d":"M200.2,1272.0C229.9,1272.0 259.6,1272.0 289.3,1272.0L295.6,1272.0"},{"p":"java","c":"c_sharp","d":"M167.5,1289.7C159.0,1318.3 145.9,1378.2 167.0,1422.0C173.9,1436.2 187.4,1447.5 199.7,1455.4L204.9,1458.6"},{"p":"java","c":"java_5","d":"M158.2,1287.0C136.3,1309.4 98.0,1355.3 98.0,1403.0C98.0,1403.0 98.0,1403.0 98.0,1471.0C98.0,1508.5 104.2,1551.7 108.7,1577.6L109.8,1583.8"},{"p":"ocaml","c":"rust","d":"M592.0,1356.2C592.0,1381.1 592.0,1428.6 592.0,1469.0C592.0,1469.0 592.0,1469.0 592.0,1669.0C592.0,1708.0 577.2,1751.3 566.8,1776.8L564.4,1782.5"},{"p":"cpp_iso","c":"c_sharp","d":"M226.0,1422.2C226.0,1429.3 226.0,1437.8 226.0,1445.5L226.0,1451.8"},{"p":"scheme_r5rs","c":"rust","d":"M453.0,1422.2C457.2,1447.0 464.0,1494.4 464.0,1535.0C464.0,1535.0 464.0,1535.0 464.0,1669.0C464.0,1717.1 506.6,1759.6 534.1,1782.1L539.1,1786.0"},{"p":"haskell_98","c":"rust","d":"M673.0,1422.0C659.8,1446.2 638.0,1492.5 638.0,1535.0C638.0,1535.0 638.0,1535.0 638.0,1669.0C638.0,1708.1 630.6,1719.4 609.0,1752.0C601.2,1763.7 590.0,1774.4 579.9,1782.6L575.0,1786.4"},{"p":"haskell_98","c":"haskell_2010","d":"M683.2,1422.2C683.5,1447.1 684.0,1494.6 684.0,1535.0C684.0,1535.0 684.0,1535.0 684.0,1669.0C684.0,1706.3 679.9,1749.6 676.9,1775.6L676.2,1781.8"},{"p":"c_sharp","c":"c_sharp_2","d":"M235.9,1486.9C250.4,1510.1 277.2,1553.2 293.4,1579.2L296.7,1584.5"},{"p":"python_2","c":"go","d":"M772.6,1487.9C775.5,1496.8 779.1,1508.0 782.0,1518.0C802.2,1587.6 822.9,1670.9 832.5,1710.3L834.0,1716.2"},{"p":"python_2","c":"swift","d":"M766.6,1488.2C766.0,1513.1 765.0,1560.6 765.0,1601.0C765.0,1601.0 765.0,1601.0 765.0,1735.0C765.0,1773.3 764.2,1786.8 742.0,1818.0C731.7,1832.5 715.5,1843.9 701.5,1851.9L696.1,1854.9"},{"p":"java_5","c":"kotlin","d":"M122.4,1619.4C142.8,1654.6 190.7,1737.7 213.5,1777.3L216.7,1782.8"},{"p":"java_5","c":"java_8","d":"M113.0,1620.2C113.0,1645.1 113.0,1692.6 113.0,1733.0C113.0,1733.0 113.0,1733.0 113.0,1801.0C113.0,1838.2 113.0,1881.5 113.0,1907.5L113.0,1913.8"},{"p":"c_sharp_2","c":"kotlin","d":"M300.1,1619.7C285.6,1654.9 251.8,1736.5 235.4,1776.3L232.9,1782.3"},{"p":"c_sharp_2","c":"rust","d":"M318.8,1619.4C340.9,1649.3 391.4,1713.2 447.0,1752.0C471.7,1769.3 503.7,1782.0 526.8,1789.9L532.8,1791.9"},{"p":"c_sharp_2","c":"c_sharp_5","d":"M309.2,1620.2C315.1,1665.8 331.3,1790.0 338.0,1841.8L338.8,1847.8"},{"p":"rust","c":"swift","d":"M577.4,1812.2C597.0,1822.9 626.7,1839.1 648.0,1850.8L653.5,1853.8"},{"p":"haskell_2010","c":"swift","d":"M674.0,1818.2C674.0,1825.3 674.0,1833.8 674.0,1841.5L674.0,1847.8"},{"p":"c_sharp_5","c":"swift","d":"M376.1,1866.0C464.1,1866.0 552.0,1866.0 640.0,1866.0L646.1,1866.0"},{"p":"c_sharp_5","c":"javascript_es2017","d":"M346.2,1884.0C353.3,1907.1 366.0,1948.3 374.0,1974.1L375.8,1980.0"}]};
+
+//#logic-start
+function buildModel(D) {
+  const par = {}, chi = {};
+  D.nodes.forEach(n => { par[n.id] = new Set(); chi[n.id] = new Set(); });
+  D.edges.forEach(e => { par[e.c].add(e.p); chi[e.p].add(e.c); });
+  function walk(start, rel) {
+    const dist = {}; let frontier = [start], d = 0;
+    while (frontier.length) {
+      d++; const next = [];
+      for (const id of frontier) for (const r of rel[id]) if (!(r in dist)) { dist[r] = d; next.push(r); }
+      frontier = next;
+    }
+    return dist;
+  }
+  const ANC = {}, DESC = {}, GP = {};
+  D.nodes.forEach(n => {
+    ANC[n.id] = walk(n.id, par); DESC[n.id] = walk(n.id, chi);
+    const g = new Set(); for (const p of par[n.id]) for (const q of par[p]) g.add(q); GP[n.id] = g;
+  });
+  function relate(S) {
+    const cat = {}, sib = new Set(), gpS = GP[S];
+    for (const p of par[S]) for (const c of chi[p]) if (c !== S) sib.add(c);
+    for (const n of D.nodes) {
+      const id = n.id;
+      if (id === S) cat[id] = 'self';
+      else if (id in ANC[S]) cat[id] = 'anc';
+      else if (id in DESC[S]) cat[id] = 'desc';
+      else if (sib.has(id)) cat[id] = 'sib';
+      else if ([...GP[id]].some(g => gpS.has(g))) cat[id] = 'cous';
+      else if (Object.keys(ANC[id]).some(a => a in ANC[S])) cat[id] = 'kin';
+      else cat[id] = 'none';
+    }
+    const cousEdge = new Set();
+    for (const id in cat) if (cat[id] === 'cous') {
+      for (const q of par[id]) for (const g of par[q]) if (gpS.has(g)) { cousEdge.add(g + '>' + q); cousEdge.add(q + '>' + id); }
+    }
+    const ecls = {};
+    for (const e of D.edges) {
+      const k = e.p + '>' + e.c; let c = '';
+      if (e.c === S || e.c in ANC[S]) c = 'anc';
+      else if (e.p === S || e.p in DESC[S]) c = 'desc';
+      else if (par[S].has(e.p) && cat[e.c] === 'sib') c = 'sib';
+      else if (cousEdge.has(k)) c = 'cous';
+      ecls[k] = c;
+    }
+    return { cat, ecls };
+  }
+  return { par, chi, ANC, DESC, relate };
+}
+//#logic-end
+
+(function () {
+  const NS = 'http://www.w3.org/2000/svg';
+  const M = buildModel(DATA);
+  const byId = {}; DATA.nodes.forEach(n => byId[n.id] = n);
+  const $ = id => document.getElementById(id);
+  const svg = $('svg'), graph = $('graph'), panel = $('panel'), legend = $('legend'), pick = $('pick');
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const CATS = [
+    { k: 'anc', name: 'Ancestors', note: 'Every language it descends from.' },
+    { k: 'desc', name: 'Descendants', note: 'Every language that descends from it.' },
+    { k: 'sib', name: 'Siblings', note: 'Share at least one parent with it.' },
+    { k: 'cous', name: 'First cousins', note: 'Share a grandparent, but are not siblings or direct kin.' },
+    { k: 'kin', name: 'Distant kin', note: 'Share an older ancestor only.' }
+  ];
+  const vis = { anc: true, desc: true, sib: true, cous: true, kin: true };
+  let sel = null;
+
+  $('stat').textContent = DATA.nodes.length + ' languages, ' + DATA.edges.length + ' links, ' +
+    Math.min(...DATA.nodes.map(n => n.year)) + '–' + Math.max(...DATA.nodes.map(n => n.year)) + '.';
+
+  // select options
+  const opts = ['<option value="">Choose a language</option>'].concat(
+    DATA.nodes.slice().sort((a, b) => a.label.localeCompare(b.label)).map(n => '<option value="' + n.id + '">' + esc(n.label) + ' · ' + n.year + '</option>'));
+  pick.innerHTML = opts.join('');
+
+  // legend
+  legend.innerHTML = CATS.map(c => '<li><button type="button" class="lg" data-k="' + c.k + '" aria-pressed="true" title="' + esc(c.note) + '"><span class="sw"></span><span class="nm">' + c.name + '</span><span class="ct" data-ct="' + c.k + '">–</span></button></li>').join('');
+
+  // svg scaffold
+  svg.setAttribute('viewBox', '0 0 ' + DATA.w + ' ' + DATA.h);
+  const mk = (tag, attrs, parent) => { const el = document.createElementNS(NS, tag); for (const k in attrs) el.setAttribute(k, attrs[k]); if (parent) parent.appendChild(el); return el; };
+  const defs = mk('defs', {}, svg);
+  ['dim', 'anc', 'desc', 'sib', 'cous'].forEach(k => {
+    const m = mk('marker', { id: 'm-' + k, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 9, markerHeight: 9, markerUnits: 'userSpaceOnUse', orient: 'auto' }, defs);
+    mk('path', { d: 'M0,1 L10,5 L0,9 z', class: 'm-' + k }, m);
+  });
+  const rowsG = mk('g', {}, svg), edgesG = mk('g', {}, svg), nodesG = mk('g', {}, svg);
+  DATA.rows.forEach(r => {
+    mk('line', { x1: 0, x2: DATA.w, y1: r.y, y2: r.y, class: 'yline' }, rowsG);
+    const t = mk('text', { x: 6, y: r.y + 4, class: 'yl' }, rowsG); t.textContent = r.year;
+  });
+  const edgeEls = DATA.edges.map(e => { const el = mk('path', { d: e.d, class: 'e', 'marker-end': 'url(#m-dim)' }, edgesG); return { el, e }; });
+  const nodeEls = {};
+  DATA.nodes.forEach(n => {
+    const g = mk('g', { class: 'node', transform: 'translate(' + n.x + ',' + n.y + ')', 'data-id': n.id, role: 'button', tabindex: 0, 'aria-label': n.label + ', ' + n.year }, nodesG);
+    const ti = mk('title', {}, g); ti.textContent = n.label + ' (' + n.year + ')';
+    mk('ellipse', { rx: n.w / 2, ry: n.h / 2 }, g);
+    const t = mk('text', { 'text-anchor': 'middle', dy: '0.35em' }, g); t.textContent = n.label;
+    nodeEls[n.id] = g;
+  });
+
+  function names(ids) { return ids.map(id => byId[id]).sort((a, b) => a.year - b.year || a.label.localeCompare(b.label)); }
+  const chip = (n, k) => '<li><button type="button" class="chip"' + (k ? ' data-k="' + k + '"' : '') + ' data-go="' + n.id + '">' + esc(n.label) + '</button></li>';
+
+  function renderPanel(R) {
+    if (!sel) {
+      panel.innerHTML = '<h2>Pick a language</h2><p class="lead">Click any node, or use the menu above. Its family tree lights up, and the filters let you hide a relationship.</p>' +
+        CATS.map(c => '<div class="grp" data-k="' + c.k + '"><h3><span class="sw"></span>' + c.name + '</h3><p class="note" style="margin-bottom:0">' + c.note + '</p></div>').join('');
+      return;
+    }
+    const n = byId[sel];
+    const plist = names([...M.par[sel]]), clist = names([...M.chi[sel]]);
+    let h = '<h2>' + esc(n.label) + '<span class="yr">' + n.year + '</span></h2><dl class="kv">' +
+      '<dt>Parents</dt><dd>' + (plist.length ? '<ul class="chips">' + plist.map(p => chip(p)).join('') + '</ul>' : '<span class="none">None, a root language</span>') + '</dd>' +
+      '<dt>Children</dt><dd>' + (clist.length ? '<ul class="chips">' + clist.map(p => chip(p)).join('') + '</ul>' : '<span class="none">None recorded</span>') + '</dd></dl>';
+    CATS.forEach(c => {
+      const ids = Object.keys(R.cat).filter(id => R.cat[id] === c.k);
+      let list = names(ids);
+      if (c.k === 'anc') list = list.sort((a, b) => M.ANC[sel][a.id] - M.ANC[sel][b.id] || a.year - b.year);
+      if (c.k === 'desc') list = list.sort((a, b) => M.DESC[sel][a.id] - M.DESC[sel][b.id] || a.year - b.year);
+      h += '<div class="grp' + (vis[c.k] ? '' : ' off') + '" data-k="' + c.k + '"><h3><span class="sw"></span>' + c.name + '<span class="ct">' + list.length + '</span></h3><p class="note">' + c.note + '</p>' +
+        (list.length ? '<ul class="chips">' + list.map(x => chip(x, c.k)).join('') + '</ul>' : '<span class="none">None</span>') + '</div>';
+    });
+    const unrel = Object.keys(R.cat).filter(id => R.cat[id] === 'none').length;
+    h += '<p class="note" style="margin:14px 0 0;color:var(--muted)">' + unrel + ' languages are on unrelated branches and are dimmed.</p>';
+    panel.innerHTML = h;
+  }
+
+  function apply() {
+    const has = !!sel;
+    const R = has ? M.relate(sel) : null;
+    svg.classList.toggle('has-sel', has);
+    DATA.nodes.forEach(n => {
+      const g = nodeEls[n.id];
+      let c = has ? R.cat[n.id] : 'idle';
+      if (c !== 'self' && c !== 'idle' && c !== 'none' && !vis[c]) c = 'none';
+      g.setAttribute('class', 'node n-' + c);
+      g.setAttribute('aria-pressed', n.id === sel ? 'true' : 'false');
+    });
+    edgeEls.forEach(({ el, e }) => {
+      let c = has ? R.ecls[e.p + '>' + e.c] : '';
+      if (c && !vis[c]) c = '';
+      el.setAttribute('class', 'e' + (c ? ' ' + c : ''));
+      el.setAttribute('marker-end', 'url(#m-' + (c || 'dim') + ')');
+      if (c) edgesG.appendChild(el);
+    });
+    const counts = {}; CATS.forEach(c => counts[c.k] = 0);
+    if (has) Object.values(R.cat).forEach(c => { if (c in counts) counts[c]++; });
+    CATS.forEach(c => { legend.querySelector('[data-ct="' + c.k + '"]').textContent = has ? counts[c.k] : '–'; });
+    pick.value = sel || '';
+    renderPanel(R);
+  }
+
+  function reveal(id) {
+    const g = nodeEls[id]; if (!g) return;
+    const r = g.getBoundingClientRect(), cr = graph.getBoundingClientRect(), m = 48;
+    if (r.left >= cr.left + m && r.right <= cr.right - m && r.top >= cr.top + m && r.bottom <= cr.bottom - m) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    graph.scrollTo({
+      left: graph.scrollLeft + (r.left - cr.left) - cr.width / 2 + r.width / 2,
+      top: graph.scrollTop + (r.top - cr.top) - cr.height / 2 + r.height / 2,
+      behavior: reduce ? 'auto' : 'smooth'
+    });
+  }
+  function select(id, scroll) { sel = id || null; apply(); if (sel && scroll) reveal(sel); }
+
+  svg.addEventListener('click', ev => {
+    const g = ev.target.closest('.node');
+    select(g ? (g.getAttribute('data-id') === sel ? null : g.getAttribute('data-id')) : null, false);
+  });
+  svg.addEventListener('keydown', ev => {
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    const g = ev.target.closest('.node'); if (!g) return;
+    ev.preventDefault(); select(g.getAttribute('data-id'), false);
+  });
+  pick.addEventListener('change', () => select(pick.value, true));
+  $('clear').addEventListener('click', () => select(null, false));
+  legend.addEventListener('click', ev => {
+    const b = ev.target.closest('.lg'); if (!b) return;
+    const k = b.getAttribute('data-k'); vis[k] = !vis[k];
+    b.setAttribute('aria-pressed', vis[k] ? 'true' : 'false'); apply();
+  });
+  panel.addEventListener('click', ev => {
+    const b = ev.target.closest('[data-go]'); if (b) select(b.getAttribute('data-go'), true);
+  });
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && sel && ev.target.tagName !== 'SELECT') select(null, false); });
+
+  select('cpp', false);
+  // open with the first selection centred in the scroll area
+  requestAnimationFrame(() => {
+    const g = nodeEls['cpp'], r = g.getBoundingClientRect(), cr = graph.getBoundingClientRect();
+    graph.scrollTo({ left: graph.scrollLeft + (r.left - cr.left) - cr.width / 2 + r.width / 2, top: Math.max(0, graph.scrollTop + (r.top - cr.top) - cr.height / 3) });
+  });
+})();
+</script>
